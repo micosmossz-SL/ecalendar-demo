@@ -1,0 +1,256 @@
+/* CSS 变量定义 - 主题颜色 */
+:root {
+    /* 背景色 - 根据设计图调整 */
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+
+    /* 文字颜色 */
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --text-muted: #606060;
+
+    /* 强调色 - 设计图中的蓝色 */
+    --accent-color: #3b82f6;
+
+    /* 高亮颜色 - 今天的圆形背景 */
+    --today-bg: #3b82f6;
+    --today-text: #ffffff;
+
+    /* 间距 */
+    --spacing-large: 32px;
+    --spacing-medium: 24px;
+    --spacing-small: 16px;
+    --spacing-xs: 8px;
+
+    /* 字体大小 */
+    --font-size-huge: 64px;
+    --font-size-large: 28px;
+    --font-size-medium: 20px;
+    --font-size-small: 16px;
+    --font-size-xs: 12px;
+}
+
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 主容器 */
+.calendar-container {
+    width: 1280px;
+    height: 800px;
+    display: flex;
+    background-color: var(--bg-primary);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+/* 左侧时间区域 */
+.time-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--spacing-large);
+    padding-left: 64px;
+}
+
+/* 当前时间 */
+.current-time {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: var(--spacing-medium);
+}
+
+#hours {
+    font-size: var(--font-size-huge);
+    font-weight: 300;
+    letter-spacing: -3px;
+}
+
+.colon {
+    font-size: var(--font-size-huge);
+    margin: 0 var(--spacing-xs);
+    opacity: 0.9;
+}
+
+#minutes {
+    font-size: var(--font-size-huge);
+    font-weight: 300;
+    letter-spacing: -3px;
+}
+
+.seconds {
+    font-size: var(--font-size-large);
+    opacity: 0.5;
+    margin-left: var(--spacing-small);
+}
+
+/* 当前日期 */
+.current-date {
+    text-align: left;
+}
+
+.date {
+    font-size: var(--font-size-medium);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.weekday {
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+}
+
+/* 右侧信息区域 */
+.info-section {
+    width: 320px;
+    padding: var(--spacing-large);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-medium);
+}
+
+/* 天气信息 */
+.weather-info {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: var(--spacing-small);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-small);
+}
+
+.weather-icon {
+    font-size: 40px;
+}
+
+.weather-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.temperature {
+    font-size: var(--font-size-medium);
+    font-weight: 400;
+}
+
+.location {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+/* 迷你月历 */
+.mini-calendar {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: var(--spacing-medium);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-header {
+    text-align: center;
+    margin-bottom: var(--spacing-small);
+}
+
+.month-year {
+    font-size: var(--font-size-medium);
+    font-weight: 400;
+    color: var(--text-primary);
+}
+
+/* 日历网格 */
+.calendar-grid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 星期标题 - 简化样式 */
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.weekday-title {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* 日期格子 */
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    flex: 1;
+}
+
+.day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.day:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* 今天的日期 - 圆形背景 */
+.day.today {
+    background-color: var(--today-bg);
+    color: var(--today-text);
+    font-weight: 500;
+}
+
+.other-month {
+    color: var(--text-muted);
+    opacity: 0.3;
+}
+
+/* 响应式调整 */
+@media (max-width: 1280px) {
+    .calendar-container {
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .time-section,
+    .info-section {
+        padding: var(--spacing-medium);
+    }
+
+    #hours,
+    #minutes {
+        font-size: 60px;
+    }
+
+    .seconds {
+        font-size: 30px;
+    }
+}

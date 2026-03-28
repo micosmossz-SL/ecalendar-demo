@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子日历</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="calendar-container">
+        <!-- 左侧：时间显示区域 -->
+        <div class="time-section">
+            <div class="current-time">
+                <span id="hours">00</span>
+                <span class="colon">:</span>
+                <span id="minutes">00</span>
+                <span class="seconds" id="seconds">00</span>
+            </div>
+            <div class="current-date">
+                <div class="date" id="date">2026年3月26日</div>
+                <div class="weekday" id="weekday">星期四</div>
+            </div>
+        </div>
+
+        <!-- 右侧：信息区域 -->
+        <div class="info-section">
+            <!-- 天气信息 -->
+            <div class="weather-info">
+                <div class="weather-icon">☀️</div>
+                <div class="weather-details">
+                    <div class="temperature">22°C</div>
+                    <div class="location">上海</div>
+                </div>
+            </div>
+
+            <!-- 迷你月历 -->
+            <div class="mini-calendar">
+                <div class="calendar-header">
+                    <div class="month-year">2026年3月</div>
+                </div>
+                <div class="calendar-grid">
+                    <!-- 星期标题 -->
+                    <div class="weekdays">
+                        <div class="weekday-title">日</div>
+                        <div class="weekday-title">一</div>
+                        <div class="weekday-title">二</div>
+                        <div class="weekday-title">三</div>
+                        <div class="weekday-title">四</div>
+                        <div class="weekday-title">五</div>
+                        <div class="weekday-title">六</div>
+                    </div>
+                    <!-- 日期格子 - 由JS动态生成 -->
+                    <div class="days-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
