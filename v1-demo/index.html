@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子日历</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 背景层 -->
+    <div class="background"></div>
+
+    <!-- 时间显示 - 中央/中偏左超大显示 -->
+    <div class="time-display">
+        <div class="time-main">
+            <span id="hours">00</span>
+            <span class="colon">:</span>
+            <span id="minutes">00</span>
+        </div>
+        <div class="time-seconds" id="seconds">00</div>
+    </div>
+
+    <!-- 右下角：日期、天气、日历 -->
+    <div class="corner-info">
+        <div class="date-weather">
+            <div class="date-text" id="date">2026年3月26日 星期四</div>
+            <div class="weather-row">
+                <span class="weather-icon">☀️</span>
+                <span class="temperature">22°C</span>
+                <span class="location">上海</span>
+            </div>
+        </div>
+
+        <div class="mini-calendar">
+            <div class="calendar-header">
+                <span id="month-year">2026年3月</span>
+            </div>
+            <div class="weekdays">
+                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+            </div>
+            <div class="days-grid"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

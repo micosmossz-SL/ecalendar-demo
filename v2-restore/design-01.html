@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!--
+    viewport 锁定为 1280，平板端不缩放。
+    Fully Kiosk Browser 全屏展示时，页面会以 1280px 宽度渲染。
+  -->
+  <meta name="viewport" content="width=1280" />
+  <title>Design 01 · profinDESIGN Clock</title>
+
+  <!-- 共用基础样式 -->
+  <link rel="stylesheet" href="styles/common.css" />
+  <!-- design-01 专属样式 -->
+  <link rel="stylesheet" href="styles/design-01.css" />
+
+  <!--
+    字体说明（[待确认字体]）：
+    · 主时钟数字使用 Bebas Neue（Google Fonts 免费）作为近似替代。
+      原设计字体未知，从截图判断为厚重窄体无衬线字体（可能是
+      DIN Pro Condensed Bold、Barlow Condensed ExtraBold 等商业字体）。
+    · 辅助文字使用 Oswald SemiBold。
+    · 如需替换，在此处修改 Google Fonts 链接即可。
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+</head>
+
+<body>
+  <div class="clock-stage">
+
+    <!--
+      ── 表盘外圈三个动态标记 ──
+      分别显示当前"小时 / 分钟 / 秒钟"的数值，
+      并由 JS 定位到对应的表盘角度位置（类似模拟表盘指针方向）。
+      [待确认] 原设计外圈到底显示哪些值、是否随秒更新
+    -->
+    <div class="outer-marker" id="marker-hour">12</div>
+    <div class="outer-marker" id="marker-minute">16</div>
+    <div class="outer-marker" id="marker-second">29</div>
+
+    <!-- ── 表盘主体 ── -->
+    <div class="watch-wrapper">
+      <div class="watch-bezel">
+        <div class="watch-face">
+
+          <!--
+            品牌水印背景字（aria-hidden 让屏幕阅读器忽略装饰性内容）
+            [待确认] 水印字体与透明度
+          -->
+          <div class="brand-watermark" aria-hidden="true">
+            <span class="bw-profin">profin</span><span class="bw-design">DESIGN</span>
+          </div>
+
+          <!-- 时间显示槽（凹陷效果） -->
+          <div class="time-slot">
+            <div class="time-display">
+              <!-- 小时：白色 -->
+              <span class="hours" id="hours">12</span>
+              <!-- 冒号：两个白色圆点 -->
+              <span class="colon" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </span>
+              <!-- 分钟：黄色 -->
+              <span class="minutes" id="minutes">16</span>
+            </div>
+          </div>
+
+          <!-- 日期：年 / 月 / 日 纵向排列 -->
+          <div class="date-display">
+            <div class="year"      id="year">2026</div>
+            <div class="month-num" id="month">3</div>
+            <div class="day-num"   id="day">30</div>
+          </div>
+
+          <!--
+            品牌 Logo（纯文字模拟版）
+            [待确认] 实际 pd 图标文件（矢量/PNG），颜色与样式
+          -->
+          <div class="brand-logo">
+            <div class="pd-icon" aria-label="pd">pd</div>
+            <div class="pd-name">ProfinDesign</div>
+          </div>
+
+        </div><!-- /.watch-face -->
+      </div><!-- /.watch-bezel -->
+    </div><!-- /.watch-wrapper -->
+
+    <!--
+      底部时间读白，由 JS 实时生成
+      示例："ELEVEN FORTYFOUR TO MIDNIGHT"
+      [待确认] 读白逻辑：是"距午夜"还是"距下一整点"？
+    -->
+    <div class="time-words" id="time-words">—</div>
+
+  </div><!-- /.clock-stage -->
+
+
+  <!-- 公共工具函数 -->
+  <script src="scripts/common.js"></script>
+
+  <script>
+    /**
+     * design-01 专属更新逻辑
+     *
+     * 外圈标记定位原理：
+     *   以屏幕中心为原点，将时/分/秒的值映射为表盘角度（0° = 12点位置），
+     *   再用三角函数计算出坐标，令标记文字的中心落在对应位置。
+     *
+     * [待确认] 外圈半径值（OUTER_RADIUS）——
+     *   当前按截图目测估算为 325px，实际距离需设计师标注。
+     */
+
+    // 屏幕中心（与 CSS 中 1280×800 对齐）
+    var CX = 640;
+    var CY = 400;
+
+    // 外圈标记半径（单位：px）[待确认]
+    var OUTER_RADIUS = 325;
+
+    /**
+     * 将值（0 ~ total）转为表盘角度，再定位到外圈对应位置。
+     * @param {HTMLElement} el      标记元素
+     * @param {number}      value   当前值（0~total）
+     * @param {number}      total   一圈对应的总量（小时=12，分/秒=60）
+     */
+    function positionMarker(el, value, total) {
+      // angle：0° = 12点方向，顺时针增加
+      var angle = (value / total) * 360;
+      // 转为标准数学角度（0° = 右，逆时针），再换算到弧度
+      var rad = (angle - 90) * (Math.PI / 180);
+      var x = CX + OUTER_RADIUS * Math.cos(rad);
+      var y = CY + OUTER_RADIUS * Math.sin(rad);
+      el.style.left = x + 'px';
+      el.style.top  = y + 'px';
+    }
+
+    function update() {
+      var t = getTime();
+      var h = t.hours;
+      var m = t.minutes;
+      var s = t.seconds;
+
+      // ── 时间显示（12 小时制）──
+      document.getElementById('hours').textContent   = h % 12 || 12;
+      document.getElementById('minutes').textContent = padZero(m);
+
+      // ── 日期 ──
+      document.getElementById('year').textContent  = t.now.getFullYear();
+      document.getElementById('month').textContent = t.now.getMonth() + 1;
+      document.getElementById('day').textContent   = t.now.getDate();
+
+      // ── 时间读白 ──
+      document.getElementById('time-words').textContent = timeToWords(h, m);
+
+      // ── 外圈标记：小时 ──
+      // 12小时制；12 o'clock = 0°（正上方）
+      var hourEl = document.getElementById('marker-hour');
+      hourEl.textContent = h % 12 || 12;
+      positionMarker(hourEl, h % 12, 12);
+
+      // ── 外圈标记：分钟 ──
+      var minEl = document.getElementById('marker-minute');
+      minEl.textContent = padZero(m);
+      positionMarker(minEl, m, 60);
+
+      // ── 外圈标记：秒钟 ──
+      var secEl = document.getElementById('marker-second');
+      secEl.textContent = padZero(s);
+      positionMarker(secEl, s, 60);
+    }
+
+    // 初始化后立即执行一次，再每秒更新
+    update();
+    setInterval(update, 1000);
+  </script>
+
+</body>
+</html>

@@ -1,47 +1,170 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>电子日历</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eCalendar · 设计还原导航</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      padding: 48px 40px;
+    }
+
+    header {
+      margin-bottom: 48px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: #ffffff;
+    }
+
+    header p {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #666;
+      letter-spacing: 0.04em;
+    }
+
+    section {
+      margin-bottom: 40px;
+    }
+
+    section h2 {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      display: block;
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 20px 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .card:hover {
+      background: #1a1a1a;
+      border-color: #3a3a3a;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 400;
+      color: #d0d0d0;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .card.placeholder {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .badge-done   { background: #1a3a2a; color: #4caf84; }
+    .badge-wip    { background: #2a2a1a; color: #a09040; }
+    .badge-todo   { background: #1e1e1e; color: #555; }
+  </style>
 </head>
 <body>
-    <!-- 背景层 -->
-    <div class="background"></div>
 
-    <!-- 时间显示 - 中央/中偏左超大显示 -->
-    <div class="time-display">
-        <div class="time-main">
-            <span id="hours">00</span>
-            <span class="colon">:</span>
-            <span id="minutes">00</span>
-        </div>
-        <div class="time-seconds" id="seconds">00</div>
+  <header>
+    <h1>eCalendar <span style="color:#444">·</span> 设计还原导航</h1>
+    <p>内部 Demo · 目标分辨率 1280×800 · 纯前端 HTML/CSS/JS</p>
+  </header>
+
+  <!-- ── 阶段 1–2 历史版本 ── -->
+  <section>
+    <h2>历史版本</h2>
+    <div class="card-grid">
+      <a class="card" href="v1-demo/index.html">
+        <div class="card-title">v1 Demo <span class="badge badge-done">DONE</span></div>
+        <div class="card-desc">阶段 1–2 成果：实时时钟、迷你月历、Open-Meteo 真实天气</div>
+      </a>
     </div>
+  </section>
 
-    <!-- 右下角：日期、天气、日历 -->
-    <div class="corner-info">
-        <div class="date-weather">
-            <div class="date-text" id="date">2026年3月26日 星期四</div>
-            <div class="weather-row">
-                <span class="weather-icon">☀️</span>
-                <span class="temperature">22°C</span>
-                <span class="location">上海</span>
-            </div>
-        </div>
+  <!-- ── v2 设计还原 ── -->
+  <section>
+    <h2>V2 设计还原</h2>
+    <div class="card-grid">
 
-        <div class="mini-calendar">
-            <div class="calendar-header">
-                <span id="month-year">2026年3月</span>
-            </div>
-            <div class="weekdays">
-                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-            </div>
-            <div class="days-grid"></div>
+      <a class="card" href="v2-restore/design-01.html">
+        <div class="card-title">Design 01 · profinDESIGN Clock <span class="badge badge-wip">WIP</span></div>
+        <div class="card-desc">
+          横屏 1280×800 · 立体金属表盘 · 大尺寸数字时钟<br>
+          深灰 + 白 + 黄 · 外圈动态时/分/秒标记
         </div>
+      </a>
+
+      <div class="card placeholder">
+        <div class="card-title">Design 02 · 圆形拨盘 <span class="badge badge-todo">TODO</span></div>
+        <div class="card-desc">竖屏 · 橙色底 · 圆形拨盘 + LCD 数字</div>
+      </div>
+
+      <div class="card placeholder">
+        <div class="card-title">Design 03 · 超大排版 <span class="badge badge-todo">TODO</span></div>
+        <div class="card-desc">竖屏 · 黑底 + 米白 · 以日期为视觉主角</div>
+      </div>
+
+      <div class="card placeholder">
+        <div class="card-title">Design 04 · 同心圆指针盘 <span class="badge badge-todo">TODO</span></div>
+        <div class="card-desc">竖屏 · 极简深色 · 同心圆 + 绿色指针</div>
+      </div>
+
+      <div class="card placeholder">
+        <div class="card-title">Design 05 · 机械仪表盘 <span class="badge badge-todo">TODO</span></div>
+        <div class="card-desc">竖屏 · 纯黑 + 橙黄 · 工业机械质感</div>
+      </div>
+
+      <div class="card placeholder">
+        <div class="card-title">Design 06 · 蓝色表身 <span class="badge badge-todo">TODO</span></div>
+        <div class="card-desc">竖屏 · 深灰底 + 蓝色圆角表身 · LCD</div>
+      </div>
+
     </div>
+  </section>
 
-    <script src="script.js"></script>
 </body>
 </html>
