@@ -36,9 +36,31 @@ body {
   height: 800px;
 }
 
-/* ── 外圈三个时间标记（固定在 12 / 3 / 6 点位置）── */
+/* ── 表盘主体居中包裹层 ── */
 /*
-  坐标由 JS 初始化一次性写入，不随时间旋转；每秒只更新数值文字。
+  相对定位容器，宽高与 watch-outer 一致（580×580）。
+  外圈三个时间标记作为其子元素，在此范围内定位。
+  精确居中于页面（1280×800）中心。
+*/
+.watch-wrapper {
+  position: absolute;
+  left: 640px;
+  top:  390px;
+  transform: translate(-50%, -50%);
+  /* 给子元素绝对定位提供参照 */
+  width:  580px;
+  height: 580px;
+}
+
+/* ── 外圈三个时间标记（表框内侧 bezel 环区域，CSS 固定位置）── */
+/*
+  还原规则第4条：标记必须在表框内侧，不是表框外面。
+  watch-wrapper 580×580，中心 (290, 290)。
+  bezel 环内侧距中心约 218px（watch-face 半径）到 252px（watch-bezel 半径）。
+  标记坐标选在 bezel 环中段，距中心约 238px。
+    12点：(290, 290-238) = (290,  52) → left:290, top:52
+     3点：(290+238, 290) = (528, 290) → left:528, top:290
+     6点：(290, 290+238) = (290, 528) → left:290, top:528
   [待确认] 字体、字号精确值
 */
 .outer-marker {
@@ -47,33 +69,33 @@ body {
   color: #ffffff;
   letter-spacing: 0.03em;
   line-height: 1;
+  /* 以文字视觉中心为锚点 */
   transform: translate(-50%, -50%);
   pointer-events: none;
+  z-index: 10;
 }
 
-/* 小时：最大字号，12 点钟方向 */
+/* 小时：最大字号，12 点钟方向（正上方，bezel 环顶部） */
 #marker-hour {
   font-size: 58px; /* [待确认] */
+  left: 290px;
+  top:  52px;
 }
 
-/* 分钟：中等字号，3 点钟方向 */
+/* 分钟：中等字号，3 点钟方向（正右方，bezel 环右侧） */
+/* [取色估值] 白色，与小时同色 */
 #marker-minute {
-  font-size: 32px; /* [待确认] */
+  font-size: 30px; /* [待确认] */
+  left: 540px;
+  top:  290px;
 }
 
-/* 秒钟：最小字号，6 点钟方向 */
+/* 秒钟：最小字号，6 点钟方向（正下方，bezel 环底部） */
 #marker-second {
   font-size: 22px;
-  color: #dddddd; /* [取色估值] 近白，比小时稍暗 */
-}
-
-/* ── 表盘主体居中包裹层 ── */
-/* left/top 与 JS 中 CX=640 / CY=390 保持一致 */
-.watch-wrapper {
-  position: absolute;
-  left: 640px;
-  top:  390px;
-  transform: translate(-50%, -50%);
+  color: #cccccc; /* [取色估值] 近白，稍暗于小时/分钟 */
+  left: 290px;
+  top:  528px;
 }
 
 /* ── 第一层：最外圈（整体金属外壳 + 大悬浮阴影）── */
