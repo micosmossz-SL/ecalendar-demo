@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1280" />
+  <title>Design 04 · 同心圆 Quadodo</title>
+
+  <link rel="stylesheet" href="styles/common.css" />
+
+  <!--
+    字体说明：
+    · Barlow Condensed 900 → 超大小时数字 [待确认字体]
+    · Barlow 300           → 分钟等较细数字
+    · Inter/system-ui      → 辅助信息文字
+    原稿字体特征：小时大字极细（Ultralight/Thin），分钟略粗，品牌名"quadodo"为小写细体
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@100;300;900&family=Barlow:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── 背景：深灰 + 细点纹理 + 中心白色光晕 ── */
+    /* [取色估值] 点纹：#3a3a3a on #2d2d2d */
+    body {
+      background-color: #2a2a2a;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 8px 8px;
+    }
+
+    .clock-stage {
+      position: relative;
+      width: 1280px;
+      height: 800px;
+      overflow: hidden;
+    }
+
+    /* ── 中心白色光晕（大面积柔光） ── */
+    /* [取色估值] 中心约 #888 → 向外透明 */
+    .center-glow {
+      position: absolute;
+      width: 620px;
+      height: 620px;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -58%);
+      background: radial-gradient(circle,
+        rgba(180,180,180,0.30) 0%,
+        rgba(130,130,130,0.18) 30%,
+        rgba(80,80,80,0.06) 65%,
+        transparent 80%
+      );
+      pointer-events: none;
+    }
+
+    /* ── 左侧信息面板 ── */
+    .left-panel {
+      position: absolute;
+      top: 80px;
+      left: 40px;
+      width: 160px;
+      z-index: 2;
+    }
+
+    .panel-label {
+      font-family: 'Barlow', sans-serif;
+      font-size: 10px;
+      font-weight: 400;
+      color: #888888;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+      /* 竖线前缀 */
+      padding-left: 10px;
+      border-left: 2px solid #555555;
+    }
+
+    .panel-value-lg {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 100;
+      font-size: 62px;
+      color: #f0f0f0;
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      margin-bottom: 2px;
+    }
+
+    .panel-value-sm {
+      font-family: 'Barlow', sans-serif;
+      font-weight: 300;
+      font-size: 14px;
+      color: #aaaaaa;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+
+    /* 电池进度条 */
+    .battery-bar-wrap {
+      width: 100%;
+      height: 4px;
+      background: #3a3a3a;
+      border-radius: 2px;
+      margin-top: 6px;
+    }
+
+    .battery-bar-fill {
+      height: 100%;
+      width: 100%;  /* 100% 电量，由 JS 动态设置 */
+      background: #4cffb3;  /* [取色估值] 薄荷绿 */
+      border-radius: 2px;
+    }
+
+    /* ── 右侧竖向电量柱 ── */
+    .right-panel {
+      position: absolute;
+      top: 120px;
+      right: 40px;
+      width: 18px;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 2;
+    }
+
+    .battery-vert-wrap {
+      flex: 1;
+      width: 16px;
+      background: #3a3a3a;
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .battery-vert-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;  /* 满电 */
+      background: linear-gradient(to top, #aaaaaa, #666666);
+    }
+
+    .right-label {
+      font-family: 'Barlow', sans-serif;
+      font-size: 7px;
+      color: #666666;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ── 中央同心圆区域 ── */
+    .clock-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -52%);
+      width: 420px;
+      height: 420px;
+    }
+
+    /* 同心圆（4 个渐细白色环，用 SVG 实现） */
+    .rings-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* ── 日期文字（圆内上方） ── */
+    .date-text {
+      position: absolute;
+      top: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 400;
+      font-size: 20px;
+      color: #ffffff;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    /* ── 超大小时数字（圆心） ── */
+    /* [取色估值] 纯白，极细字重 */
+    .hour-main {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 100;
+      font-size: 240px;
+      color: #ffffff;
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+
+    /* ── 品牌名 "quadodo" ── */
+    /* [待确认] 是否为 "quadodo" 或其他品牌；字体应为小写细体 */
+    .brand-name {
+      position: absolute;
+      top: 268px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 300;
+      font-size: 26px;
+      color: #ffffff;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    /* ── 分钟数字（品牌名下方，较小） ── */
+    .minute-main {
+      position: absolute;
+      top: 298px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 300;
+      font-size: 70px;
+      color: #ffffff;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── IP 地址（圆内下方） ── */
+    .ip-text {
+      position: absolute;
+      top: 370px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      color: #999999;
+      white-space: nowrap;
+    }
+
+    /* ── 温度/电压信息（圆外下方） ── */
+    .temp-text {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      color: #999999;
+      white-space: nowrap;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="clock-stage">
+
+    <!-- 中心白色光晕 -->
+    <div class="center-glow"></div>
+
+    <!-- 左侧信息面板：时间 / 日期 / 电量 -->
+    <div class="left-panel">
+      <div class="panel-label">Time</div>
+      <div class="panel-value-lg" id="d04-lh">07</div>
+      <div class="panel-value-lg" id="d04-lm">30</div>
+
+      <div class="panel-label">Date</div>
+      <div class="panel-value-sm" id="d04-date">SEP.10.SATURDAY</div>
+
+      <div class="panel-label">Battery</div>
+      <div class="panel-value-sm">100</div>
+      <div class="battery-bar-wrap">
+        <div class="battery-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- 右侧竖向电量柱 -->
+    <div class="right-panel">
+      <div class="battery-vert-wrap">
+        <div class="battery-vert-fill"></div>
+      </div>
+      <div class="right-label">BATTERY</div>
+      <div class="right-label" style="color:#aaa;font-size:9px;">100%</div>
+    </div>
+
+    <!-- 中央同心圆时钟 -->
+    <div class="clock-center">
+
+      <!-- 同心圆 SVG -->
+      <svg class="rings-svg" viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!--
+          四个同心圆，从内到外，线条越来越细、越来越透明
+          [取色估值] 白色线条，透明度 10%–18%
+        -->
+        <circle cx="210" cy="210" r="80"  stroke="rgba(255,255,255,0.16)" stroke-width="1"/>
+        <circle cx="210" cy="210" r="130" stroke="rgba(255,255,255,0.13)" stroke-width="0.8"/>
+        <circle cx="210" cy="210" r="185" stroke="rgba(255,255,255,0.10)" stroke-width="0.7"/>
+        <circle cx="210" cy="210" r="200" stroke="rgba(255,255,255,0.08)" stroke-width="0.6"/>
+      </svg>
+
+      <!-- 日期文字 -->
+      <div class="date-text" id="d04-date-top">10 September</div>
+
+      <!-- 超大小时 -->
+      <div class="hour-main" id="d04-hour">07</div>
+
+      <!-- 品牌名 [待确认] -->
+      <div class="brand-name">quadodo</div>
+
+      <!-- 分钟 -->
+      <div class="minute-main" id="d04-minute">30</div>
+
+      <!-- IP 地址（静态，实际环境无法获取） [待确认] -->
+      <div class="ip-text">IP: 192.168.2.177</div>
+
+    </div><!-- /.clock-center -->
+
+    <!-- 温度/电压（静态装饰） [待确认] 是否接入真实传感器数据 -->
+    <div class="temp-text">Temp 31.0°C, Voltage 4387mv</div>
+
+  </div><!-- /.clock-stage -->
+
+  <script src="scripts/common.js"></script>
+  <script>
+    /**
+     * design-04 更新逻辑
+     * · 中央大字小时和分钟 → 实时
+     * · 左侧面板小时/分钟 → 同上
+     * · 日期 → 实时
+     * [待确认] IP / Temp / Voltage 是否需要真实数据
+     */
+    var MONTH_NAMES = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+    var DAY_NAMES = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+
+    function update() {
+      var t   = getTime();
+      var h   = t.hours;
+      var m   = t.minutes;
+      var now = t.now;
+
+      var day   = now.getDate();
+      var month = MONTH_NAMES[now.getMonth()];
+      var dow   = DAY_NAMES[now.getDay()];
+      var dateStr = now.toLocaleDateString('en-US', { month:'short' }).toUpperCase() + '.'
+                  + padZero(day) + '.' + dow;
+
+      document.getElementById('d04-hour').textContent    = padZero(h);
+      document.getElementById('d04-minute').textContent  = padZero(m);
+      document.getElementById('d04-lh').textContent      = padZero(h);
+      document.getElementById('d04-lm').textContent      = padZero(m);
+      document.getElementById('d04-date-top').textContent = day + ' ' + month;
+      document.getElementById('d04-date').textContent    = dateStr;
+    }
+
+    update();
+    setInterval(update, 1000);
+  </script>
+</body>
+</html>

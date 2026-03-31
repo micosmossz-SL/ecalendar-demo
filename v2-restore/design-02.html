@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1280" />
+  <title>Design 02 · 圆形拨盘时钟</title>
+
+  <link rel="stylesheet" href="styles/common.css" />
+
+  <!--
+    字体说明：
+    · Bebas Neue  → 大号小时阴影文字
+    · VT323       → LCD 数字时间（像素/数码风格）[待确认字体]
+    · Share Tech Mono → 橙色圆内分钟数字
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── 背景 ──────────────────────────────────── */
+    /* [取色估值] 扁平暖橙色，无渐变 */
+    body {
+      background: #C47A1E;
+    }
+
+    .clock-stage {
+      position: relative;
+      width: 1280px;
+      height: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── 整体组件容器 ───────────────────────────── */
+    .widget {
+      position: relative;
+      width: 560px;
+      height: 530px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── 背景光晕（球后方的银灰色发光圆） ── */
+    /* [取色估值] 从截图取色：浅灰 #c8c8c8，边缘向橙色背景透明过渡 */
+    .ball-halo {
+      position: absolute;
+      width: 560px;
+      height: 560px;
+      border-radius: 50%;
+      top: -30px;
+      left: 0;
+      background: radial-gradient(circle at 38% 33%,
+        rgba(210,210,210,0.88) 0%,
+        rgba(180,180,180,0.60) 18%,
+        rgba(130,130,130,0.25) 45%,
+        transparent 68%
+      );
+      filter: blur(14px);
+      pointer-events: none;
+    }
+
+    /* ── 主球体（深色金属质感圆） ── */
+    /* [取色估值] 左上受光约 #c0c0c0，中心暗 #404040，右下最暗 #121212 */
+    .ball {
+      position: absolute;
+      width: 490px;
+      height: 490px;
+      border-radius: 50%;
+      top: 0;
+      left: 35px;
+      background: radial-gradient(circle at 30% 26%,
+        #c0c0c0 0%,
+        #888888 14%,
+        #484848 42%,
+        #202020 74%,
+        #0e0e0e 100%
+      );
+      box-shadow:
+        0 30px 90px rgba(0,0,0,0.88),
+        0 10px 28px rgba(0,0,0,0.55),
+        inset 2px 2px 0 rgba(255,255,255,0.16),
+        inset -2px -2px 0 rgba(0,0,0,0.65);
+      overflow: hidden;
+    }
+
+    /* ── 球内深色内面（凹陷感） ── */
+    /* [取色估值] 深蓝灰 #282c34 → #0e1018 */
+    .ball-face {
+      position: absolute;
+      width: 426px;
+      height: 426px;
+      border-radius: 50%;
+      top: 32px;
+      left: 32px;
+      background: radial-gradient(circle at 50% 42%,
+        #282c34 0%,
+        #1a1d24 55%,
+        #0e1018 100%
+      );
+      box-shadow:
+        inset 0 6px 22px rgba(0,0,0,0.85),
+        inset 0 -2px 8px rgba(0,0,0,0.45);
+      overflow: hidden;
+    }
+
+    /* ── 灰色外虚线环 ── */
+    /* [取色估值] 浅灰 #aaaaaa，全圆虚线 */
+    .gray-ring {
+      position: absolute;
+      width: 330px;
+      height: 330px;
+      border-radius: 50%;
+      border: 2px dashed rgba(160,160,160,0.65);
+      top: 48px;
+      left: 48px;
+      pointer-events: none;
+    }
+
+    /* ── 橙色内虚线环（进度弧，约 270°） ── */
+    /* [取色估值] 橙 #E07820，用 SVG 描边弧代替 CSS，近似 270° */
+    .orange-ring {
+      position: absolute;
+      width: 256px;
+      height: 256px;
+      border-radius: 50%;
+      border: 3px dashed #E07820;
+      top: 85px;
+      left: 85px;
+      pointer-events: none;
+      /* 仅渐变遮罩可裁 arc，此处近似全圆虚线 */
+    }
+
+    /* ── 水平灰色点线（向右延伸至球边缘） ── */
+    .h-dots {
+      position: absolute;
+      height: 2px;
+      /* 从橙色环右边缘到球面右侧 */
+      left: 222px;  /* 橙环右端：85+256 = 341，相对 face → 341-32=309; face内 right of ring */
+      right: 2px;
+      top: 209px;   /* face 中心 213px，水平线在橙环 3/4 高度位置 */
+      background: repeating-linear-gradient(
+        to right,
+        rgba(200,200,200,0.55) 0,
+        rgba(200,200,200,0.55) 4px,
+        transparent 4px,
+        transparent 9px
+      );
+      pointer-events: none;
+    }
+
+    /* ── 大号小时阴影文字（极低对比度，球下半部） ── */
+    /* [待确认字体] 使用 Bebas Neue 近似，原稿为宽体重字 */
+    .hour-shadow {
+      position: absolute;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 230px;
+      color: rgba(12,12,12,0.52);
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* ── 橙色圆形徽章（小时/分钟指示器） ── */
+    /* [取色估值] 中心高光 #f0a030，边缘 #a04808 */
+    .orange-badge {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      top: 106px;
+      left: 168px;  /* center: 426/2 - 45 = 168 */
+      background: radial-gradient(circle at 36% 30%,
+        #f0a030 0%,
+        #c86010 60%,
+        #a04808 100%
+      );
+      box-shadow:
+        0 4px 20px rgba(0,0,0,0.72),
+        0 2px 6px rgba(190,90,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+    }
+
+    .badge-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 34px;
+      font-weight: bold;
+      color: #2a1005;
+      line-height: 1;
+    }
+
+    /* ── 徽章下方连接引脚（小矩形） ── */
+    /* [取色估值] 深灰渐变 */
+    .badge-pin {
+      position: absolute;
+      width: 9px;
+      height: 26px;
+      border-radius: 3px;
+      top: 196px;
+      left: 208px;  /* center of badge: 168+45-9/2 = 208 */
+      background: linear-gradient(to bottom, #707070, #2a2a2a);
+      z-index: 3;
+    }
+
+    /* ── LCD 时间面板（球底部，嵌入显示） ── */
+    /* [取色估值] 接近纯黑 */
+    .lcd-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 78px;
+      background: rgba(6,6,6,0.96);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .lcd-time {
+      font-family: 'VT323', monospace;  /* [待确认字体] */
+      font-size: 74px;
+      color: #ffffff;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+
+    /* ── 球下方投影（椭圆阴影） ── */
+    .ball-shadow {
+      position: absolute;
+      width: 420px;
+      height: 30px;
+      bottom: -8px;
+      left: 50px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.45);
+      filter: blur(18px);
+    }
+
+    /* ── 分页指示点 ── */
+    .page-dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 18px;
+    }
+
+    .page-dots span {
+      display: block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+    }
+
+    .page-dots span.active {
+      background: rgba(255,255,255,0.85);
+      width: 20px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="clock-stage">
+
+    <div class="widget">
+      <!-- 背景光晕 -->
+      <div class="ball-halo"></div>
+
+      <!-- 主球体 -->
+      <div class="ball">
+        <!-- 球内深色内面 -->
+        <div class="ball-face">
+          <!-- 灰色外虚线环 -->
+          <div class="gray-ring"></div>
+          <!-- 橙色内虚线环 -->
+          <div class="orange-ring"></div>
+          <!-- 水平灰色点线 -->
+          <div class="h-dots"></div>
+          <!-- 大号小时阴影（低对比度背景文字） -->
+          <div class="hour-shadow" id="d02-hour-bg">11</div>
+          <!-- 橙色圆形徽章（分钟指示） -->
+          <div class="orange-badge">
+            <span class="badge-text" id="d02-minute">42</span>
+          </div>
+          <!-- 徽章下方引脚 -->
+          <div class="badge-pin"></div>
+        </div><!-- /.ball-face -->
+
+        <!-- LCD 时间面板（覆盖球底部） -->
+        <div class="lcd-panel">
+          <span class="lcd-time" id="d02-time">23:42</span>
+        </div>
+      </div><!-- /.ball -->
+
+      <!-- 球下方投影 -->
+      <div class="ball-shadow"></div>
+    </div><!-- /.widget -->
+
+    <!-- 分页指示点（装饰性） -->
+    <div class="page-dots">
+      <span></span><span></span><span></span>
+      <span class="active"></span>
+      <span></span><span></span><span></span>
+    </div>
+
+  </div><!-- /.clock-stage -->
+
+  <script src="scripts/common.js"></script>
+  <script>
+    /**
+     * design-02 更新逻辑
+     * · 橙色徽章 → 当前分钟数
+     * · 球背景大字 → 当前小时（12h 制）
+     * · LCD 面板 → HH:MM（24h 制）[待确认] 是否 24h 制
+     */
+    function update() {
+      var t = getTime();
+      var h  = t.hours;
+      var m  = t.minutes;
+
+      var h12 = h % 12 || 12;
+
+      document.getElementById('d02-hour-bg').textContent = h12;
+      document.getElementById('d02-minute').textContent  = padZero(m);
+      document.getElementById('d02-time').textContent    = padZero(h) + ':' + padZero(m);
+    }
+
+    update();
+    setInterval(update, 1000);
+  </script>
+</body>
+</html>

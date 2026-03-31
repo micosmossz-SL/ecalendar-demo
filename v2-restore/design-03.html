@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1280" />
+  <title>Design 03 · 超大排版时钟</title>
+
+  <link rel="stylesheet" href="styles/common.css" />
+
+  <!--
+    字体说明：
+    · Barlow Condensed ExtraBold → 超大小时/分钟数字 [待确认字体]
+      原稿字体为超粗衬线或重体无衬线，可能是 Playfair Display Black 或
+      自定义字体，此处以 Barlow Condensed 900 近似。
+    · Inter / system-ui → 辅助信息文字
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=Barlow:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── 背景：深色仿皮革纹理 ── */
+    /* [取色估值] 近黑底 #0d0d0d + 压花菱形纹理（CSS 模拟） */
+    /* [待替换为真实背景图] */
+    body {
+      background-color: #0c0c0c;
+      background-image:
+        /* 细菱形纹理模拟皮革压花 */
+        repeating-linear-gradient(
+          45deg,
+          rgba(30,28,26,0.8) 0px,
+          rgba(30,28,26,0.8) 1px,
+          transparent 1px,
+          transparent 8px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          rgba(30,28,26,0.8) 0px,
+          rgba(30,28,26,0.8) 1px,
+          transparent 1px,
+          transparent 8px
+        );
+    }
+
+    .clock-stage {
+      position: relative;
+      width: 1280px;
+      height: 800px;
+      overflow: hidden;
+    }
+
+    /* ── 右侧红色大斜面几何形 ── */
+    /*
+      [取色估值] 深红 #8B0000 + 细竖线纹理叠加
+      clip-path 切出对角形状：从屏幕右侧延伸至左侧约 40% 处
+    */
+    .red-shape {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      /* 斜切：左边从 38% 顶部切到 55% 底部 */
+      clip-path: polygon(42% 0%, 100% 0%, 100% 100%, 58% 100%);
+      background-color: #8a0000;
+      /* 细竖线纹理叠加 [取色估值] */
+      background-image: repeating-linear-gradient(
+        to right,
+        rgba(0,0,0,0.18) 0px,
+        rgba(0,0,0,0.18) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    }
+
+    /* 红色第二层薄片（亮一点，营造层次感） */
+    .red-shape-2 {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      clip-path: polygon(46% 0%, 50% 0%, 63% 100%, 59% 100%);
+      background: rgba(160,10,10,0.7);
+    }
+
+    /* ── 超大小时数字（左上区域） ── */
+    /*
+      [取色估值] 米白/奶油色 #F0E8D0
+      [待确认字体] Barlow Condensed 900 作为近似
+    */
+    .hour-display {
+      position: absolute;
+      top: -20px;
+      left: 30px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 420px;
+      color: #EDE0C4;  /* [取色估值] */
+      line-height: 0.88;
+      letter-spacing: -0.04em;
+      pointer-events: none;
+      /* 右侧被红色形状部分遮挡 → z-index 在红色形状之后 */
+      z-index: 0;
+    }
+
+    /* ── 信息块（月相、湿度、星期） ── */
+    .info-block {
+      position: absolute;
+      top: 280px;
+      left: 36px;
+      z-index: 2;
+    }
+
+    .info-moon {
+      font-family: 'Barlow', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+      line-height: 1.5;
+    }
+
+    /* 星期标签（极小字 "Sun"） */
+    .info-day-label {
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      color: #aaaaaa;
+      letter-spacing: 0.04em;
+      margin-top: 4px;
+    }
+
+    /* ── 星期几 + 大号分钟数字并排 ── */
+    .date-row {
+      position: absolute;
+      top: 350px;
+      left: 36px;
+      display: flex;
+      align-items: baseline;
+      gap: 0;
+      z-index: 2;
+    }
+
+    /* 小号星期几缩写列（纵向叠放） */
+    .weekday-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-right: 8px;
+      padding-top: 48px;
+    }
+
+    .weekday-col span {
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      color: #cccccc;
+      line-height: 1.4;
+    }
+
+    /* 当前星期 */
+    .weekday-current {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 80px;
+      color: #EDE0C4;  /* [取色估值] */
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── 大号分钟数字 ── */
+    /*
+      [取色估值] 同小时颜色 #EDE0C4
+      位置在右侧，叠在红色形状之上
+    */
+    .minute-display {
+      position: absolute;
+      bottom: -10px;
+      right: -10px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 420px;
+      color: #EDE0C4;  /* [取色估值] */
+      line-height: 0.88;
+      letter-spacing: -0.04em;
+      z-index: 3;
+    }
+
+    /* ── 日落时间 ── */
+    .sunset-text {
+      position: absolute;
+      top: 560px;
+      left: 36px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: #ffffff;
+      z-index: 2;
+    }
+
+    /* ── 底部标语 ── */
+    /*
+      [取色估值] 橙红色 #e84000，右下角位置
+    */
+    .tagline {
+      position: absolute;
+      bottom: 24px;
+      right: 36px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      font-style: italic;
+      color: #e84000;  /* [取色估值] */
+      z-index: 4;
+    }
+
+    /* ── 星期几行（Sun 前缀 + Mon 大字的容器） ── */
+    .weekday-wrap {
+      position: absolute;
+      top: 355px;
+      left: 36px;
+      z-index: 2;
+    }
+
+    .wd-label {
+      font-family: 'Barlow', sans-serif;
+      font-size: 11px;
+      color: #888888;
+      letter-spacing: 0.06em;
+      margin-bottom: 0;
+    }
+
+    .wd-main {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 90px;
+      color: #EDE0C4;
+      line-height: 0.88;
+      letter-spacing: -0.02em;
+    }
+
+    /* 小号日期列（星期缩写） */
+    .wd-list {
+      position: absolute;
+      top: 410px;
+      left: 36px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      color: #cccccc;
+      line-height: 1.55;
+      z-index: 2;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="clock-stage">
+
+    <!-- 红色斜面几何形（背景层） -->
+    <div class="red-shape"></div>
+    <div class="red-shape-2"></div>
+
+    <!-- 超大小时数字（左侧主视觉） -->
+    <!-- 注：z-index 低于红色形状，部分被遮挡，形成层次感 -->
+    <div class="hour-display" id="d03-hour">22</div>
+
+    <!-- 信息块：月相 + 湿度 -->
+    <div class="info-block">
+      <div class="info-moon" id="d03-moon">Moon 81% &nbsp;44%</div>
+      <div class="info-day-label" id="d03-day-label">Sun</div>
+    </div>
+
+    <!-- 星期几标题 -->
+    <div class="weekday-wrap">
+      <div class="wd-label"></div>
+      <div class="wd-main" id="d03-weekday">Mon</div>
+    </div>
+
+    <!-- 星期缩写列 -->
+    <div class="wd-list" id="d03-wd-list">
+      Tue<br>Wed<br>Thu<br>Fri<br>Sat
+    </div>
+
+    <!-- 日落时间（静态装饰文字，实际无法从前端获取） -->
+    <div class="sunset-text">Sunset 18:48</div><!-- [待确认] 是否接入真实日落数据 -->
+
+    <!-- 超大分钟数字（右侧，叠在红色上） -->
+    <div class="minute-display" id="d03-minute">24</div>
+
+    <!-- 底部标语 [取色估值] 橙红色 -->
+    <div class="tagline">If you open, you can explore the world.</div>
+
+  </div><!-- /.clock-stage -->
+
+  <script src="scripts/common.js"></script>
+  <script>
+    /**
+     * design-03 更新逻辑
+     * · 大号小时数字 → 24h 小时（与原稿一致）
+     * · 大号分钟数字 → 分钟
+     * · 星期几 → 当前英文星期缩写
+     * · 月相百分比为静态展示 [待确认] 是否接入实际数据
+     */
+    var DAY_ABBR  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var DAY_FULL  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    /* 后续 4 天缩写（不含今天，从明天开始） */
+    function nextDays(todayIdx) {
+      var arr = [];
+      for (var i = 1; i <= 5; i++) arr.push(DAY_ABBR[(todayIdx + i) % 7]);
+      return arr.join('<br>');
+    }
+
+    function update() {
+      var t   = getTime();
+      var h   = t.hours;
+      var m   = t.minutes;
+      var dow = t.now.getDay();
+
+      document.getElementById('d03-hour').textContent    = padZero(h);
+      document.getElementById('d03-minute').textContent  = padZero(m);
+      document.getElementById('d03-weekday').textContent = DAY_ABBR[dow];
+      document.getElementById('d03-day-label').textContent = DAY_ABBR[(dow + 6) % 7]; /* 昨天 */
+      document.getElementById('d03-wd-list').innerHTML   = nextDays(dow);
+    }
+
+    update();
+    setInterval(update, 60000); /* 每分钟刷新即可 */
+  </script>
+</body>
+</html>

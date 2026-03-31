@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1280" />
+  <title>Design 05 · 机械仪表盘</title>
+
+  <link rel="stylesheet" href="styles/common.css" />
+
+  <!--
+    字体说明：
+    · Barlow Condensed 700 → 仪表盘数字、M·Ctrl 品牌名 [待确认字体]
+    · Share Tech Mono      → 计时器、技术数字
+    · Barlow 400           → 辅助信息文字
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── 背景：近纯黑 ── */
+    /* [取色估值] #0d0d0d */
+    body {
+      background: #0d0d0d;
+    }
+
+    .clock-stage {
+      position: relative;
+      width: 1280px;
+      height: 800px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ── 顶部信息文字块 ── */
+    .top-info {
+      position: absolute;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 3;
+    }
+
+    .top-info-prose {
+      font-family: 'Barlow', sans-serif;
+      font-size: 15px;
+      color: #666666;
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+    }
+
+    .top-info-data {
+      font-family: 'Barlow', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #dddddd;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── 四角装饰刻度线 ── */
+    /*
+      每个角有 2 条短白色对角线，模拟视频取景框的角落标记
+      [取色估值] 白色 40% 透明
+    */
+    .corner-mark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      z-index: 4;
+    }
+
+    .corner-mark::before,
+    .corner-mark::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.40);
+    }
+
+    /* 各角位置 */
+    .cm-tl { top: 120px; left: 420px; }
+    .cm-tr { top: 120px; right: 420px; }
+    .cm-bl { bottom: 100px; left: 420px; }
+    .cm-br { bottom: 100px; right: 420px; }
+
+    /* 横线 */
+    .corner-mark::before { width: 14px; height: 1.5px; top: 0; left: 0; }
+    /* 竖线 */
+    .corner-mark::after  { width: 1.5px; height: 14px; top: 0; left: 0; }
+
+    /* 右下角和右上角需要翻转 */
+    .cm-tr::before, .cm-tr::after { left: auto; right: 0; }
+    .cm-bl::before { top: auto; bottom: 0; }
+    .cm-bl::after  { top: auto; bottom: 0; }
+    .cm-br::before { top: auto; bottom: 0; left: auto; right: 0; }
+    .cm-br::after  { top: auto; bottom: 0; left: auto; right: 0; }
+
+    /* ── 主仪表盘外圈刻度（使用 SVG） ── */
+    .knob-wrap {
+      position: relative;
+      width: 340px;
+      height: 340px;
+    }
+
+    .knob-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── 旋钮主体（嵌套圆层） ── */
+    /* 第一层：外金属锯齿环（背景底色 + 纹理用 SVG 表示） */
+    .knob-outer {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      top: 20px; left: 20px;
+      /* [取色估值] 深灰渐变金属感，左上稍亮 */
+      background: radial-gradient(circle at 35% 30%,
+        #303030 0%,
+        #1e1e1e 50%,
+        #111111 100%
+      );
+      box-shadow:
+        0 10px 40px rgba(0,0,0,0.88),
+        inset 1px 1px 0 rgba(255,255,255,0.06),
+        inset -1px -1px 0 rgba(0,0,0,0.6);
+    }
+
+    /* 第二层：内黑圆（旋钮中心凹陷） */
+    .knob-inner {
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      top: 85px; left: 85px;
+      background: radial-gradient(circle, #111111 0%, #080808 100%);
+      box-shadow: inset 0 5px 18px rgba(0,0,0,0.95);
+      z-index: 1;
+    }
+
+    /* ── 橙色中心圆（指针基点） ── */
+    /* [取色估值] #f5a623 → #e08010 */
+    .orange-blob {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      top: 125px; left: 125px;
+      background: radial-gradient(circle at 38% 32%,
+        #ffa030 0%,
+        #d07000 60%,
+        #a04800 100%
+      );
+      box-shadow:
+        0 4px 16px rgba(180,100,0,0.5),
+        0 0 30px rgba(220,130,0,0.15);
+      z-index: 2;
+    }
+
+    /* ── 指针/针柄（从橙色圆向左下延伸） ── */
+    .pointer {
+      position: absolute;
+      width: 120px;
+      height: 36px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #222222, #333333);
+      /* 旋转 -135° 使其指向左下方向 */
+      transform: rotate(-135deg) translateX(-20px);
+      transform-origin: right center;
+      top: 152px;   /* center of knob: 170 - 18 */
+      left: 96px;   /* slightly left of center */
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-left: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+    }
+
+    /* 指针上的小时数字 */
+    .pointer-hour {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: #ffffff;
+      transform: rotate(135deg);  /* 抵消指针旋转 */
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    /* 指针末端的橙色圆（分钟） */
+    .pointer-end {
+      position: absolute;
+      width: 46px;
+      height: 30px;
+      border-radius: 15px;
+      background: #e07818;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      left: -38px;
+      top: 3px;
+    }
+
+    .pointer-minute {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: #ffffff;
+      transform: rotate(135deg);
+      line-height: 1;
+    }
+
+    /* ── 刻度标签（顶 C、右 MAX） ── */
+    .knob-label {
+      position: absolute;
+      font-family: 'Barlow', sans-serif;
+      font-size: 11px;
+      color: #888888;
+      letter-spacing: 0.04em;
+    }
+
+    .label-c   { top: 96px;  left: 50%; transform: translateX(-50%); }
+    .label-max { top: 50%;   right: 80px; transform: translateY(-50%); }
+
+    /* ── M·Ctrl 品牌文字 ── */
+    /* [待确认] 品牌名是否确定为 "M·Ctrl" */
+    .brand-mctrl {
+      position: absolute;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 44px;
+      color: #ffffff;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      z-index: 3;
+    }
+
+    /* ── 计时器数字显示 ── */
+    .timer-display {
+      position: absolute;
+      bottom: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 18px;
+      color: #888888;
+      letter-spacing: 0.06em;
+      text-align: center;
+      white-space: nowrap;
+      z-index: 3;
+    }
+
+    .timer-loops {
+      font-family: 'Barlow', sans-serif;
+      font-size: 10px;
+      color: #555555;
+      letter-spacing: 0.12em;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* ── 底部中文 Logo 三目 ── */
+    /* [取色估值] 白色，粗体几何字 */
+    .logo-sanmu {
+      position: absolute;
+      bottom: 62px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 52px;
+      color: #ffffff;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      /* [待确认] 原稿使用"三目"汉字 Logo，字体未知，此处以 CSS 样式近似 */
+    }
+
+    .logo-ip {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      color: #cccccc;
+      white-space: nowrap;
+    }
+
+    /* ── 小副表盘（品牌名下方） ── */
+    .sub-knob {
+      position: absolute;
+      bottom: 165px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 36% 32%, #2a2a2a, #111111);
+      box-shadow: inset 0 3px 10px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.5);
+      z-index: 3;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="clock-stage">
+
+    <!-- 顶部信息文字 -->
+    <div class="top-info">
+      <div class="top-info-prose" id="d05-prose">fourh twentytwom to midnight</div>
+      <div class="top-info-data">Temp 30.0°C, Voltage 3781mv</div><!-- [待确认] 传感器数据 -->
+      <div class="top-info-data">Discharging, 38%, ~7h left</div><!-- [待确认] 电池状态 -->
+    </div>
+
+    <!-- 四角装饰刻度线 -->
+    <div class="corner-mark cm-tl"></div>
+    <div class="corner-mark cm-tr"></div>
+    <div class="corner-mark cm-bl"></div>
+    <div class="corner-mark cm-br"></div>
+
+    <!-- 主仪表盘 -->
+    <div class="knob-wrap">
+
+      <!-- 外圈锯齿/刻度线（SVG） -->
+      <!--
+        用 repeating-conic-gradient 模拟齿状外环刻度
+        [待确认] 原稿锯齿密度与尺寸
+      -->
+      <svg class="knob-svg" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- 外圈金属底 -->
+        <circle cx="170" cy="170" r="165" fill="url(#metalRing)" />
+        <!-- 刻度线（每 10° 一条，共 36 条） -->
+        <g stroke="rgba(255,255,255,0.45)" stroke-width="1.2">
+          <!-- 通过 JS 生成更多刻度线；这里静态写几条示意 -->
+        </g>
+        <defs>
+          <radialGradient id="metalRing" cx="35%" cy="30%" r="65%">
+            <stop offset="0%"   stop-color="#404040"/>
+            <stop offset="40%"  stop-color="#252525"/>
+            <stop offset="100%" stop-color="#111111"/>
+          </radialGradient>
+        </defs>
+      </svg>
+
+      <!-- 旋钮外层金属圆 -->
+      <div class="knob-outer"></div>
+
+      <!-- 旋钮内黑圆 -->
+      <div class="knob-inner"></div>
+
+      <!-- 橙色中心圆 -->
+      <div class="orange-blob"></div>
+
+      <!-- 指针（含小时文字 + 末端分钟圆） -->
+      <div class="pointer">
+        <span class="pointer-hour" id="d05-hour">19</span>
+        <div class="pointer-end">
+          <span class="pointer-minute" id="d05-minute">38</span>
+        </div>
+      </div>
+
+      <!-- 顶部 C 标签 -->
+      <div class="knob-label label-c">C</div>
+      <!-- 右侧 MAX 标签 -->
+      <div class="knob-label label-max">MAX</div>
+
+    </div><!-- /.knob-wrap -->
+
+    <!-- 计时器显示 -->
+    <div class="timer-display">
+      0:00.000
+      <div class="timer-loops">loops</div>
+    </div>
+
+    <!-- 副表盘 -->
+    <div class="sub-knob"></div>
+
+    <!-- M·Ctrl 品牌 -->
+    <div class="brand-mctrl">M·Ctrl</div>
+
+    <!-- 底部 Logo + IP -->
+    <!-- [待确认] "三目" 为原稿底部中文字 Logo，字体/样式需设计师确认 -->
+    <div class="logo-sanmu">三目</div>
+    <div class="logo-ip">IP: 192.168.2.159</div>
+
+  </div><!-- /.clock-stage -->
+
+  <script src="scripts/common.js"></script>
+  <script>
+    /**
+     * design-05 更新逻辑
+     * · 指针上的小时/分钟 → 实时（12h 制）
+     * · 顶部散文时间 → timeToWords 函数生成
+     */
+
+    /* 生成刻度线（每 10° 一条，共 36 条） */
+    (function drawTicks() {
+      var svg = document.querySelector('.knob-svg');
+      var cx = 170, cy = 170, r = 162;
+      for (var i = 0; i < 36; i++) {
+        var angle = (i * 10 - 90) * Math.PI / 180;
+        var x1 = cx + r * Math.cos(angle);
+        var y1 = cy + r * Math.sin(angle);
+        var len = (i % 3 === 0) ? 14 : 8;
+        var x2 = cx + (r - len) * Math.cos(angle);
+        var y2 = cy + (r - len) * Math.sin(angle);
+        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1.toFixed(1));
+        line.setAttribute('y1', y1.toFixed(1));
+        line.setAttribute('x2', x2.toFixed(1));
+        line.setAttribute('y2', y2.toFixed(1));
+        line.setAttribute('stroke', 'rgba(255,255,255,0.48)');
+        line.setAttribute('stroke-width', i % 3 === 0 ? '1.5' : '0.8');
+        svg.appendChild(line);
+      }
+    })();
+
+    function update() {
+      var t  = getTime();
+      var h  = t.hours;
+      var m  = t.minutes;
+      var h12 = h % 12 || 12;
+
+      document.getElementById('d05-hour').textContent   = h12;
+      document.getElementById('d05-minute').textContent = padZero(m);
+      document.getElementById('d05-prose').textContent  = timeToWords(h, m).toLowerCase();
+    }
+
+    update();
+    setInterval(update, 1000);
+  </script>
+</body>
+</html>
