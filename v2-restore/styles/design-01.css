@@ -9,13 +9,21 @@
    ============================================================ */
 
 /* ── 背景 ── */
-/* [取色估值] 深灰放射渐变，中心稍亮，四角暗 */
+/*
+  [取色估值] 深灰径向渐变，中心偏暖灰，四角近黑
+  背景光源隐约来自屏幕下方中心（衬托表盘底部发光感）
+*/
 body {
-  background: radial-gradient(ellipse at center,
-    #252525 0%,
-    #1c1c1c 50%,
-    #141414 100%
-  );
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 80%,
+      rgba(70, 70, 70, 0.25) 0%,
+      transparent 70%
+    ),
+    radial-gradient(ellipse at 50% 50%,
+      #343434 0%,
+      #202020 40%,
+      #111111 100%
+    );
 }
 
 /* ── 全屏舞台容器 ── */
@@ -25,123 +33,140 @@ body {
   height: 800px;
 }
 
-/* ── 中央光晕（表盘后方隐约的背景亮点） ── */
-/* [待确认] 是否有此层效果 */
-.clock-stage::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top:  50%;
-  transform: translate(-50%, -50%);
-  width:  560px;
-  height: 720px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center,
-    rgba(50, 50, 50, 0.35) 0%,
-    transparent 70%
-  );
-  pointer-events: none;
-}
-
-/* ── 表盘外圈刻度标记 ── */
+/* ── 外圈三个时间标记（固定在 12 / 3 / 6 点位置）── */
 /*
-  三个标记分别代表：当前小时、分钟、秒钟在表盘外圈的角度位置。
-  由 JS 根据当前时间动态计算并定位。
-  [待确认] 原设计外圈标记的字体、字号、是否有样式区分
+  位置由 JS 初始化时一次性设定，不随时间旋转。
+  · 小时 → 12 点钟（正上方）
+  · 分钟 → 3  点钟（正右方）
+  · 秒钟 → 6  点钟（正下方）
+  数值每秒更新，但坐标固定不动。
+  [待确认] 原设计字体、字号的精确值
 */
 .outer-marker {
   position: absolute;
   font-family: 'Bebas Neue', 'Impact', sans-serif; /* [待确认字体] */
   color: #ffffff;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   line-height: 1;
-  /* 以文字中心为锚点 */
+  /* 以文字中心为锚点，与 JS 坐标对齐 */
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
+/* 小时：最大字号，强调 */
 #marker-hour {
-  font-size: 44px; /* [待确认] */
+  font-size: 50px; /* [待确认] */
 }
 
+/* 分钟：中等字号 */
 #marker-minute {
   font-size: 30px; /* [待确认] */
 }
 
+/* 秒钟：最小字号，低调 */
 #marker-second {
-  font-size: 20px;
-  color: #aaaaaa; /* [取色估值] 比小时/分钟更暗淡 */
+  font-size: 22px;
+  color: #bbbbbb; /* [取色估值] 比小时稍暗，区分主次 */
 }
 
 /* ── 表盘主体居中包裹层 ── */
+/*
+  精确定位到 (640, 390)，与 JS 中 CX/CY 保持一致
+*/
 .watch-wrapper {
   position: absolute;
-  left: 50%;
-  top:  50%;
+  left: 640px;
+  top:  390px;
   transform: translate(-50%, -50%);
 }
 
-/* ── 表圈（立体金属边框） ── */
+/* ── 第一层：最外圈（整体外轮廓 + 大阴影）── */
 /*
-  用渐变 + 多层 box-shadow 模拟磨砂金属质感：
-  • 左上亮、右下暗 → 模拟顶部光源
-  • 大型底部阴影   → 模拟悬浮感
-  [待确认] 实际表圈厚度、圆角精确值、表面材质
+  模拟磨砂金属外环；
+  渐变方向：左上角略亮（受光面），右下角深暗（背光面）。
+  [取色估值] 外环顶点高光约 #4e4e4e，底部暗处约 #1a1a1a
 */
-.watch-bezel {
-  width:         500px;
-  height:        644px;
-  border-radius: 74px;
+.watch-outer {
+  width:         580px;
+  height:        580px;
+  border-radius: 92px;
 
-  /* [取色估值] 深灰金属色，左上略亮 */
-  background: linear-gradient(150deg,
-    #3c3c3c 0%,
-    #2e2e2e 28%,
-    #242424 60%,
+  background: linear-gradient(145deg,
+    #4e4e4e 0%,
+    #3a3a3a 22%,
+    #2a2a2a 55%,
     #1c1c1c 100%
   );
 
   box-shadow:
-    /* 底部大型投影 */
-    0 32px 80px rgba(0, 0, 0, 0.85),
-    0 10px 30px rgba(0, 0, 0, 0.60),
-    /* 左上高光细边 */
-    -1px -1px 0 rgba(255, 255, 255, 0.13),
-    /* 右下阴影细边 */
-     1px  1px 0 rgba(0, 0, 0, 0.80),
-    /* 最外圈深色轮廓线 */
-    0 0 0 2px #0e0e0e;
+    /* 大型投影：模拟悬浮 */
+    0 40px 100px rgba(0, 0, 0, 0.92),
+    0 16px 40px  rgba(0, 0, 0, 0.65),
+    /* 顶部极细高光线（左上受光） */
+    inset  0    1px 0 rgba(255, 255, 255, 0.15),
+    inset  1px  0   0 rgba(255, 255, 255, 0.07),
+    /* 底部边缘压暗 */
+    inset  0   -1px 0 rgba(0, 0, 0, 0.60),
+    /* 最外圈轮廓描边 */
+    0 0 0 1px #0a0a0a;
 
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* ── 表盘内面（凹陷效果） ── */
+/* ── 第二层：中间表圈（内嵌一级，增加层次感）── */
 /*
-  inset box-shadow 制造内凹质感；
-  放射渐变使中心略亮，增加立体感。
-  [待确认] 内面圆角与边距
+  比外圈略暗；四周内阴影制造"槽"的立体感。
+  [取色估值] #303030 → #1c1c1c
+*/
+.watch-bezel {
+  width:         506px;
+  height:        506px;
+  border-radius: 80px;
+
+  background: linear-gradient(160deg,
+    #363636 0%,
+    #272727 42%,
+    #1e1e1e 100%
+  );
+
+  box-shadow:
+    inset 0  5px 14px rgba(0, 0, 0, 0.88),
+    inset 0 -3px  8px rgba(0, 0, 0, 0.40),
+    inset  3px 0 10px rgba(0, 0, 0, 0.45),
+    inset -3px 0 10px rgba(0, 0, 0, 0.45),
+    /* 顶部内壁高光细线 */
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 第三层：表盘内面（屏幕感，最暗）── */
+/*
+  径向渐变：中上方略亮（显示区），边缘最暗（衬托屏幕深度感）
+  四周深度内阴影进一步强调内凹。
+  [取色估值]
 */
 .watch-face {
-  width:         440px;
-  height:        584px;
-  border-radius: 60px;
+  width:         436px;
+  height:        436px;
+  border-radius: 68px;
 
-  /* [取色估值] 比表圈略暗，中心放射亮点 */
   background: radial-gradient(ellipse at 50% 36%,
-    #232323 0%,
-    #1a1a1a 52%,
+    #282828 0%,
+    #1c1c1c 50%,
     #141414 100%
   );
 
   box-shadow:
-    inset 0  8px 24px rgba(0, 0, 0, 0.75),
-    inset 0 -4px 12px rgba(0, 0, 0, 0.40),
-    inset  4px 0 16px rgba(0, 0, 0, 0.50),
-    inset -4px 0 16px rgba(0, 0, 0, 0.50),
-    /* 顶部极细高光线 */
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0   8px 28px rgba(0, 0, 0, 0.88),
+    inset 0  -4px 12px rgba(0, 0, 0, 0.40),
+    inset  5px 0  18px rgba(0, 0, 0, 0.52),
+    inset -5px 0  18px rgba(0, 0, 0, 0.52),
+    inset 0   1px  0   rgba(255, 255, 255, 0.04);
 
   position: relative;
   display: flex;
@@ -153,54 +178,58 @@ body {
 
 /* ── 品牌水印背景字 ── */
 /*
-  "profinDESIGN" 大字水印，几乎融入背景
-  [待确认] 水印字体、精确透明度、垂直位置
+  "profinDESIGN" 极低对比度大字，融入背景起装饰作用。
+  "profin" 几乎不可见（深于背景）；"DESIGN" 略亮一点可辨认。
+  [待确认] 水印字体与精确透明度
 */
 .brand-watermark {
   position: absolute;
-  top:  50%;
+  top:  13%;
   left: 50%;
-  transform: translate(-50%, -58%);
+  transform: translateX(-50%);
   white-space: nowrap;
-  font-size: 54px;
+  font-size: 50px;
   line-height: 1;
   letter-spacing: -0.01em;
   pointer-events: none;
 }
 
 .bw-profin {
-  /* [取色估值] 接近表面色，极低对比度 */
   font-family: 'Bebas Neue', 'Impact', sans-serif; /* [待确认字体] */
   font-weight: 700;
-  color: #0c0c0c;
+  /* [取色估值] 接近表面色，极低对比度 */
+  color: #090909;
 }
 
 .bw-design {
-  /* [取色估值] 比 profin 略亮一点 */
   font-family: 'Bebas Neue', 'Impact', sans-serif; /* [待确认字体] */
   font-weight: 400;
-  color: #252525;
+  /* [取色估值] 比 profin 略亮一点 */
+  color: #202020;
   text-transform: uppercase;
 }
 
-/* ── 时间显示槽（横向凹槽） ── */
+/* ── 时间显示槽（横向深凹条）── */
 /*
-  模拟压入表盘的深色槽，内部显示时间数字
-  [待确认] 凹槽圆角、精确高度
+  模拟压入表盘的深色槽；宽度接近满幅。
+  内阴影制造深凹感，数字在槽内以极大字号展示。
+  [取色估值] 槽底色 #080808
+  [待确认] 槽的精确高度与圆角
 */
 .time-slot {
   width:         414px;
-  height:        206px;
-  border-radius: 18px;
+  height:        186px;
+  border-radius: 14px;
 
-  /* [取色估值] 接近纯黑 */
-  background: #0d0d0d;
+  background: #080808;
 
   box-shadow:
-    inset 0  5px 18px rgba(0, 0, 0, 0.90),
-    inset 0 -2px  6px rgba(0, 0, 0, 0.50),
-    inset  2px 0  8px rgba(0, 0, 0, 0.45),
-    inset -2px 0  8px rgba(0, 0, 0, 0.45);
+    inset 0  6px 22px rgba(0, 0, 0, 0.96),
+    inset 0 -2px  8px rgba(0, 0, 0, 0.55),
+    inset  3px 0 12px rgba(0, 0, 0, 0.50),
+    inset -3px 0 12px rgba(0, 0, 0, 0.50),
+    /* 上沿内壁极细高光 */
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 
   display: flex;
   align-items: center;
@@ -216,125 +245,135 @@ body {
   line-height: 1;
 }
 
-/* 小时（白色） */
+/* 小时（白色，与设计稿一致） */
 .hours {
   font-family: 'Bebas Neue', 'Impact', sans-serif; /* [待确认字体] */
-  font-size: 175px;
+  font-size: 165px;
   color: #ffffff;
   letter-spacing: -0.04em;
   line-height: 0.88;
 }
 
-/* 分钟（黄色） */
+/* 分钟（黄色，与设计稿一致） */
 .minutes {
   font-family: 'Bebas Neue', 'Impact', sans-serif; /* [待确认字体] */
-  font-size: 175px;
-  /* [取色估值] 暖金黄，从截图目测 */
+  font-size: 165px;
+  /* [取色估值] 从截图取色，暖金黄 */
   color: #F5C400;
   letter-spacing: -0.04em;
   line-height: 0.88;
 }
 
-/* 冒号：两个圆点 */
+/* 冒号：两个白色圆点 */
 .colon {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap:          22px;
-  padding:       0 5px;
-  margin-bottom: 6px;
+  gap:          20px;
+  padding:       0 4px;
+  margin-bottom: 4px;
 }
 
 .colon .dot {
   display: block;
-  width:         12px;
-  height:        12px;
+  width:         11px;
+  height:        11px;
   border-radius: 50%;
   background: #ffffff;
 }
 
-/* ── 日期显示（年 / 月 / 日 纵向叠放） ── */
+/* ── 日期显示（年 / 月 / 日 纵向叠放）── */
+/*
+  三行字号不同：年份与日期同尺寸，月份最大。
+  颜色：年=白，月=暗灰（低调后退），日=白。
+  [取色估值] [待确认] 月份颜色是否有意为暗灰？
+*/
 .date-display {
   text-align: center;
-  margin-top: 10px;
+  margin-top: 8px;
   font-family: 'Bebas Neue', 'Impact', sans-serif; /* [待确认字体] */
   line-height: 1;
   z-index: 1;
 }
 
-/* 年份：较小 */
+/* 年份 */
 .year {
-  font-size:      44px;
-  color:          #ffffff;
-  letter-spacing: 0.06em;
+  font-size:      36px;
+  color:          #dddddd;
+  letter-spacing: 0.10em;
 }
 
-/* 月份：最大 */
-/* [待确认] 月份数字在设计稿中比年份大很多，此处按截图估算比例 */
+/* 月份：字号最大，但颜色偏暗（区分层次） */
 .month-num {
-  font-size:      72px;
-  color:          #ffffff;
+  font-size:      56px;
+  /* [取色估值] 深灰，营造层次感 */
+  color:          #3a3a3a;
   letter-spacing: 0.06em;
   margin-top:    -2px;
 }
 
-/* 日：中等 */
+/* 日期 */
 .day-num {
-  font-size:      44px;
-  color:          #ffffff;
-  letter-spacing: 0.06em;
+  font-size:      36px;
+  color:          #dddddd;
+  letter-spacing: 0.10em;
   margin-top:    -4px;
 }
 
-/* ── 品牌 Logo（表盘底部） ── */
+/* ── 品牌 Logo（表盘底部）── */
 /*
-  设计稿中为 "pd" 图标 + "PROFINDESIGN" 小字，黄色。
-  [待确认] 实际 Logo 矢量/图片文件；以下为纯文字模拟版
+  黄色 "pd" 字样 + 极小字 "PROFINDESIGN"。
+  [待确认] 是否有实际 Logo 矢量文件；以下为文字模拟版
+  [待确认] pd 字形：原稿看起来是自定义字形或斜体粗体
 */
 .brand-logo {
-  margin-top: 14px;
+  margin-top: 10px;
   text-align: center;
   z-index: 1;
 }
 
 .pd-icon {
+  /* [待确认字体] 原稿 "pd" 看似自定义斜体字形，此处用斜体近似 */
   font-family:    'Bebas Neue', sans-serif;
-  font-size:      30px;
-  color:          #F5C400; /* [取色估值] 与分钟同色 */
-  letter-spacing: -0.08em;
+  font-style:     italic;
+  font-size:      34px;
+  color:          #F5C400;
+  letter-spacing: -0.06em;
   line-height:    1;
+  text-shadow:    0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .pd-name {
   font-family:    'Oswald', sans-serif; /* [待确认字体] */
-  font-size:       9px;
+  font-size:       8px;
   font-weight:    600;
-  letter-spacing: 0.20em;
+  letter-spacing: 0.22em;
   color:          #F5C400;
   text-transform: uppercase;
   margin-top:     3px;
+  opacity: 0.85;
 }
 
 /* ── 底部时间读白 ── */
 /*
   示例："ELEVEN FORTYFOUR TO MIDNIGHT"
-  由 JS 实时生成
-  [待确认] 精确字体、字号、颜色、与底边的距离
+  由 JS 实时生成，装饰性极小字。
+  [待确认] 精确字体、字号、颜色值及距底边间距
 */
 .time-words {
   position:  absolute;
-  bottom:    24px;
+  bottom:    20px;
   left:      50%;
   transform: translateX(-50%);
 
   font-family:    'Oswald', sans-serif; /* [待确认字体] */
-  font-size:      11px;
+  font-size:      10px;
   font-weight:    400;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   white-space:    nowrap;
 
-  /* [取色估值] 极暗灰，勉强可见 */
-  color: #3e3e3e;
+  /* [取色估值] 极暗灰，若隐若现 */
+  color: #3a3a3a;
 }

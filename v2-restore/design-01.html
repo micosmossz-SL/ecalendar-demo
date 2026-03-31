@@ -35,60 +35,70 @@
 
     <!--
       ── 表盘外圈三个动态标记 ──
-      分别显示当前"小时 / 分钟 / 秒钟"的数值，
-      并由 JS 定位到对应的表盘角度位置（类似模拟表盘指针方向）。
-      [待确认] 原设计外圈到底显示哪些值、是否随秒更新
+      · #marker-hour   → 始终固定在 12 点钟方向（正上方），显示当前小时数
+      · #marker-minute → 始终固定在  3 点钟方向（正右方），显示当前分钟数
+      · #marker-second → 始终固定在  6 点钟方向（正下方），显示当前秒钟数
+      坐标由 JS 初始化时一次性写入，每秒只更新文字数值，不改变位置。
     -->
     <div class="outer-marker" id="marker-hour">12</div>
-    <div class="outer-marker" id="marker-minute">16</div>
-    <div class="outer-marker" id="marker-second">29</div>
+    <div class="outer-marker" id="marker-minute">00</div>
+    <div class="outer-marker" id="marker-second">00</div>
 
-    <!-- ── 表盘主体 ── -->
+    <!-- ── 表盘主体（三层嵌套，由外到内）── -->
     <div class="watch-wrapper">
-      <div class="watch-bezel">
-        <div class="watch-face">
 
-          <!--
-            品牌水印背景字（aria-hidden 让屏幕阅读器忽略装饰性内容）
-            [待确认] 水印字体与透明度
-          -->
-          <div class="brand-watermark" aria-hidden="true">
-            <span class="bw-profin">profin</span><span class="bw-design">DESIGN</span>
-          </div>
+      <!-- 第一层：最外圈（整体轮廓 + 大阴影） -->
+      <div class="watch-outer">
 
-          <!-- 时间显示槽（凹陷效果） -->
-          <div class="time-slot">
-            <div class="time-display">
-              <!-- 小时：白色 -->
-              <span class="hours" id="hours">12</span>
-              <!-- 冒号：两个白色圆点 -->
-              <span class="colon" aria-hidden="true">
-                <span class="dot"></span>
-                <span class="dot"></span>
-              </span>
-              <!-- 分钟：黄色 -->
-              <span class="minutes" id="minutes">16</span>
+        <!-- 第二层：中间表圈（增加立体层次） -->
+        <div class="watch-bezel">
+
+          <!-- 第三层：内屏（最暗，凹陷效果） -->
+          <div class="watch-face">
+
+            <!--
+              品牌水印背景字（aria-hidden 让屏幕阅读器忽略装饰性内容）
+              [待确认] 水印字体与透明度
+            -->
+            <div class="brand-watermark" aria-hidden="true">
+              <span class="bw-profin">profin</span><span class="bw-design">DESIGN</span>
             </div>
-          </div>
 
-          <!-- 日期：年 / 月 / 日 纵向排列 -->
-          <div class="date-display">
-            <div class="year"      id="year">2026</div>
-            <div class="month-num" id="month">3</div>
-            <div class="day-num"   id="day">30</div>
-          </div>
+            <!-- 时间显示槽（深色凹槽） -->
+            <div class="time-slot">
+              <div class="time-display">
+                <!-- 小时：白色 -->
+                <span class="hours" id="hours">12</span>
+                <!-- 冒号：两个白色圆点 -->
+                <span class="colon" aria-hidden="true">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </span>
+                <!-- 分钟：黄色 -->
+                <span class="minutes" id="minutes">00</span>
+              </div>
+            </div>
 
-          <!--
-            品牌 Logo（纯文字模拟版）
-            [待确认] 实际 pd 图标文件（矢量/PNG），颜色与样式
-          -->
-          <div class="brand-logo">
-            <div class="pd-icon" aria-label="pd">pd</div>
-            <div class="pd-name">ProfinDesign</div>
-          </div>
+            <!-- 日期：年 / 月 / 日 纵向排列 -->
+            <div class="date-display">
+              <div class="year"      id="year">2026</div>
+              <div class="month-num" id="month">3</div>
+              <div class="day-num"   id="day">31</div>
+            </div>
 
-        </div><!-- /.watch-face -->
-      </div><!-- /.watch-bezel -->
+            <!--
+              品牌 Logo（纯文字模拟版）
+              [待确认] 实际 pd 图标文件（矢量/PNG），颜色与字形
+            -->
+            <div class="brand-logo">
+              <div class="pd-icon" aria-label="pd">pd</div>
+              <div class="pd-name">ProfinDesign</div>
+            </div>
+
+          </div><!-- /.watch-face -->
+        </div><!-- /.watch-bezel -->
+      </div><!-- /.watch-outer -->
+
     </div><!-- /.watch-wrapper -->
 
     <!--
@@ -109,44 +119,49 @@
      * design-01 专属更新逻辑
      *
      * 外圈标记定位原理：
-     *   以屏幕中心为原点，将时/分/秒的值映射为表盘角度（0° = 12点位置），
-     *   再用三角函数计算出坐标，令标记文字的中心落在对应位置。
+     *   三个标记始终位于表盘的 12 / 3 / 6 点钟方向（固定坐标，不旋转）。
+     *   · 小时标记 → 正上方（angle = 0°）
+     *   · 分钟标记 → 正右方（angle = 90°）
+     *   · 秒钟标记 → 正下方（angle = 180°）
+     *   每秒只更新各标记显示的数字，不改变坐标。
      *
-     * [待确认] 外圈半径值（OUTER_RADIUS）——
-     *   当前按截图目测估算为 325px，实际距离需设计师标注。
+     * CSS 中 .watch-wrapper 精确定位到 left:640px / top:390px，
+     * 此处 CX/CY 与之对应。
      */
 
-    // 屏幕中心（与 CSS 中 1280×800 对齐）
+    // 表盘屏幕中心坐标（与 CSS 中 left:640px / top:390px 对齐）
     var CX = 640;
-    var CY = 400;
+    var CY = 390;
 
-    // 外圈标记半径（单位：px）[待确认]
-    var OUTER_RADIUS = 325;
+    // 外圈标记到表盘中心的距离（px）[待确认]
+    // 580px watch-outer 的外边缘距中心 290px，标记在外边缘再往外约 25px
+    var OUTER_RADIUS = 315;
 
     /**
-     * 将值（0 ~ total）转为表盘角度，再定位到外圈对应位置。
-     * @param {HTMLElement} el      标记元素
-     * @param {number}      value   当前值（0~total）
-     * @param {number}      total   一圈对应的总量（小时=12，分/秒=60）
+     * 初始化外圈标记坐标（只调用一次，坐标固定不变）
+     * angle: 0° = 12点，90° = 3点，180° = 6点
      */
-    function positionMarker(el, value, total) {
-      // angle：0° = 12点方向，顺时针增加
-      var angle = (value / total) * 360;
-      // 转为标准数学角度（0° = 右，逆时针），再换算到弧度
-      var rad = (angle - 90) * (Math.PI / 180);
-      var x = CX + OUTER_RADIUS * Math.cos(rad);
-      var y = CY + OUTER_RADIUS * Math.sin(rad);
-      el.style.left = x + 'px';
-      el.style.top  = y + 'px';
+    function placeMarker(el, angleDeg) {
+      var rad = (angleDeg - 90) * (Math.PI / 180);
+      el.style.left = (CX + OUTER_RADIUS * Math.cos(rad)) + 'px';
+      el.style.top  = (CY + OUTER_RADIUS * Math.sin(rad)) + 'px';
     }
 
+    // 一次性定位，不再移动
+    placeMarker(document.getElementById('marker-hour'),    0);   // 12 点
+    placeMarker(document.getElementById('marker-minute'),  90);  // 3  点
+    placeMarker(document.getElementById('marker-second'),  180); // 6  点
+
+    /**
+     * 每秒更新：时间数字、日期、读白、外圈标记数值
+     */
     function update() {
       var t = getTime();
       var h = t.hours;
       var m = t.minutes;
       var s = t.seconds;
 
-      // ── 时间显示（12 小时制）──
+      // ── 主时间显示（12 小时制）──
       document.getElementById('hours').textContent   = h % 12 || 12;
       document.getElementById('minutes').textContent = padZero(m);
 
@@ -155,27 +170,16 @@
       document.getElementById('month').textContent = t.now.getMonth() + 1;
       document.getElementById('day').textContent   = t.now.getDate();
 
-      // ── 时间读白 ──
+      // ── 底部时间读白 ──
       document.getElementById('time-words').textContent = timeToWords(h, m);
 
-      // ── 外圈标记：小时 ──
-      // 12小时制；12 o'clock = 0°（正上方）
-      var hourEl = document.getElementById('marker-hour');
-      hourEl.textContent = h % 12 || 12;
-      positionMarker(hourEl, h % 12, 12);
-
-      // ── 外圈标记：分钟 ──
-      var minEl = document.getElementById('marker-minute');
-      minEl.textContent = padZero(m);
-      positionMarker(minEl, m, 60);
-
-      // ── 外圈标记：秒钟 ──
-      var secEl = document.getElementById('marker-second');
-      secEl.textContent = padZero(s);
-      positionMarker(secEl, s, 60);
+      // ── 外圈标记数值（坐标已固定，只更新文字）──
+      document.getElementById('marker-hour').textContent   = h % 12 || 12;
+      document.getElementById('marker-minute').textContent = padZero(m);
+      document.getElementById('marker-second').textContent = padZero(s);
     }
 
-    // 初始化后立即执行一次，再每秒更新
+    // 立即执行一次，之后每秒更新
     update();
     setInterval(update, 1000);
   </script>
