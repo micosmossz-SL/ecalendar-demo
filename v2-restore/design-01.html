@@ -1,157 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <!--
-    viewport 锁定为 1280，平板端不缩放。
-    Fully Kiosk Browser 全屏展示时，页面会以 1280px 宽度渲染。
-  -->
   <meta name="viewport" content="width=1280" />
-  <title>Design 01 · profinDESIGN Clock</title>
-
+  <title>Design 01 · SVG 还原</title>
   <link rel="stylesheet" href="styles/common.css" />
-  <link rel="stylesheet" href="styles/design-01.css" />
-
-  <!--
-    字体说明（[待确认字体]）：
-    · 主时钟数字使用 Bebas Neue（Google Fonts 免费）作为近似替代。
-      原设计字体未知，从截图判断为厚重窄体无衬线字体（可能是
-      DIN Pro Condensed Bold、Barlow Condensed ExtraBold 等商业字体）。
-    · 辅助文字使用 Oswald SemiBold。
-  -->
+  <link rel="stylesheet" href="styles/design-01-svg.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
     rel="stylesheet"
   />
 </head>
-
 <body>
-  <div class="clock-stage">
+  <main class="svg-stage">
+    <section class="svg-frame">
+      <img
+        class="svg-clock"
+        src="assets/design-01-full.svg"
+        alt="Design 01 全量 SVG 设计稿还原"
+        draggable="false"
+      />
 
-    <!-- ── 表盘主体（三层嵌套 + 内圈三个时间标记）── -->
-    <div class="watch-wrapper">
+      <div class="live-marker live-marker-top" id="marker-hour">12</div>
+      <div class="live-marker live-marker-right" id="marker-minute">00</div>
+      <div class="live-marker live-marker-bottom" id="marker-second">00</div>
 
-      <!--
-        ── 外圈三个时间标记（在 watch-wrapper 内部定位）──
-        按照还原规则第4条：时/分/秒标记必须在表框内侧对应位置，不是表框外面。
-        · #marker-hour   → 12 点钟方向（正上方，位于 bezel 环内侧顶部）
-        · #marker-minute → 3  点钟方向（正右方，位于 bezel 环内侧右侧）
-        · #marker-second → 6  点钟方向（正下方，位于 bezel 环内侧底部）
-        位置由 CSS 固定；JS 每秒只更新显示的数字。
-      -->
-      <div class="outer-marker" id="marker-hour">12</div>
-      <div class="outer-marker" id="marker-minute">00</div>
-      <div class="outer-marker" id="marker-second">00</div>
+      <div class="live-time" aria-label="实时时间">
+        <span class="live-hour" id="live-hour">12</span>
+        <span class="live-colon" aria-hidden="true">:</span>
+        <span class="live-minute" id="live-minute">00</span>
+      </div>
 
-      <!-- 第一层：最外圈（整体轮廓 + 大阴影） -->
-      <div class="watch-outer">
+      <div class="live-date" aria-label="实时日期">
+        <div class="live-year" id="live-year">2026</div>
+        <div class="live-month" id="live-month">04</div>
+        <div class="live-day" id="live-day">05</div>
+      </div>
 
-        <!-- 第二层：中间表圈（增加立体层次） -->
-        <div class="watch-bezel">
-
-          <!-- 第三层：内屏（最暗，凹陷效果） -->
-          <div class="watch-face">
-
-            <!--
-              品牌水印背景字（装饰性，屏幕阅读器忽略）
-              "profinDESIGN" 极低对比度大字，融入背景。
-              [待确认] 水印字体与精确透明度
-            -->
-            <div class="brand-watermark" aria-hidden="true">
-              <span class="bw-profin">profin</span><span class="bw-design">DESIGN</span>
-            </div>
-
-            <!-- 时间显示槽（深色凹槽，几乎满幅宽度） -->
-            <div class="time-slot">
-              <div class="time-display">
-                <!-- 小时：白色 [取色估值] -->
-                <span class="hours" id="hours">12</span>
-                <!-- 冒号：两个白色圆点 -->
-                <span class="colon" aria-hidden="true">
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                </span>
-                <!-- 分钟：黄色 [取色估值] #F5C400 -->
-                <span class="minutes" id="minutes">00</span>
-              </div>
-            </div>
-
-            <!--
-              日期：年 / 月 / 日 纵向紧凑排列
-              按还原规则第3条：行距极小甚至重合，用 line-height + 负 margin 精确模拟。
-            -->
-            <div class="date-display">
-              <div class="year"      id="year">2026</div>
-              <div class="month-num" id="month">3</div>
-              <div class="day-num"   id="day">31</div>
-            </div>
-
-            <!--
-              品牌 Logo：黄色 "pd" + 极小字 "PROFINDESIGN"
-              [待确认] 实际 pd 图标矢量文件；以下为文字模拟版
-              [待确认] pd 字形（原稿看似自定义斜体几何字体）
-            -->
-            <div class="brand-logo">
-              <div class="pd-icon" aria-label="pd">pd</div>
-              <div class="pd-name">ProfinDesign</div>
-            </div>
-
-          </div><!-- /.watch-face -->
-        </div><!-- /.watch-bezel -->
-      </div><!-- /.watch-outer -->
-
-    </div><!-- /.watch-wrapper -->
-
-    <!--
-      底部装饰性英文小字，由 JS 实时生成
-      示例："ELEVEN FORTYFOUR TO MIDNIGHT"
-      [待确认] 读白逻辑（当前实现：距午夜剩余时间）
-    -->
-    <div class="time-words" id="time-words">—</div>
-
-  </div><!-- /.clock-stage -->
-
+      <div class="live-words" id="live-words">ELEVEN FORTYFOUR TO MIDNIGHT</div>
+    </section>
+  </main>
 
   <script src="scripts/common.js"></script>
-
   <script>
-    /**
-     * design-01 专属更新逻辑
-     *
-     * 外圈标记说明：
-     *   三个标记现在是 .watch-wrapper 的子元素，由 CSS 固定在
-     *   12点 / 3点 / 6点位置（表框内侧 bezel 环区域）。
-     *   JS 每秒只更新文字数值，不操作位置。
-     */
-    function update() {
-      var t = getTime();
-      var h = t.hours;
-      var m = t.minutes;
-      var s = t.seconds;
-
-      // ── 主时间显示（12 小时制）──
-      document.getElementById('hours').textContent   = h % 12 || 12;
-      document.getElementById('minutes').textContent = padZero(m);
-
-      // ── 日期 ──
-      document.getElementById('year').textContent  = t.now.getFullYear();
-      document.getElementById('month').textContent = t.now.getMonth() + 1;
-      document.getElementById('day').textContent   = t.now.getDate();
-
-      // ── 底部时间读白 ──
-      document.getElementById('time-words').textContent = timeToWords(h, m);
-
-      // ── 外圈标记数值（位置由 CSS 固定，这里只更新文字）──
-      document.getElementById('marker-hour').textContent   = h % 12 || 12;
-      document.getElementById('marker-minute').textContent = padZero(m);
-      document.getElementById('marker-second').textContent = padZero(s);
+    function setMarkerPosition(id, turn, radiusPx) {
+      var angle = turn * 360;
+      var el = document.getElementById(id);
+      el.style.transform =
+        'translate(-50%, -50%) ' +
+        'rotate(' + angle + 'deg) ' +
+        'translateY(-' + radiusPx + 'px) ' +
+        'rotate(' + (-angle) + 'deg)';
     }
 
-    update();
-    setInterval(update, 1000);
-  </script>
+    function updateDesign01Svg() {
+      var t = getTime();
+      var h12 = t.hours % 12 || 12;
+      var hTurn = (h12 % 12 + t.minutes / 60 + t.seconds / 3600) / 12;
+      var mTurn = (t.minutes + t.seconds / 60) / 60;
+      var sTurn = t.seconds / 60;
 
+      document.getElementById('live-hour').textContent = padZero(h12);
+      document.getElementById('live-minute').textContent = padZero(t.minutes);
+
+      document.getElementById('live-year').textContent = t.now.getFullYear();
+      document.getElementById('live-month').textContent = padZero(t.now.getMonth() + 1);
+      document.getElementById('live-day').textContent = padZero(t.now.getDate());
+
+      document.getElementById('marker-hour').textContent = padZero(h12);
+      document.getElementById('marker-minute').textContent = padZero(t.minutes);
+      document.getElementById('marker-second').textContent = padZero(t.seconds);
+
+      // 12 点在顶部（0turn），顺时针沿外圈移动。
+      setMarkerPosition('marker-hour', hTurn, 282);
+      setMarkerPosition('marker-minute', mTurn, 282);
+      setMarkerPosition('marker-second', sTurn, 282);
+
+    }
+
+    updateDesign01Svg();
+    setInterval(updateDesign01Svg, 1000);
+  </script>
 </body>
 </html>
